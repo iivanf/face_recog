@@ -7,7 +7,7 @@ import pickle
 from PIL import Image, ImageDraw
 import numpy as np
 import argparse
-
+import insight
 
 
 DEFAULT_ENCODINGS_PATH = Path("output/encodings.pkl")
@@ -112,12 +112,22 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Face recognition CLI tool.")
     parser.add_argument("--train", action="store_true", help="Encode known faces")
     parser.add_argument("--validate", action="store_true", help="Validate faces in validation directory")
+    parser.add_argument("--insightface", action="store_true", help="Train and validate using insightface model")
 
     args = parser.parse_args()
     if args.train:
         encode_known_faces()
     elif args.validate:
         validate()
+    elif args.insightface:
+        print("Preparing training data...") 
+        embeddings, labels = insight.prepare_training_data(Path("training"))
+    
+        print("Training model...")
+        model, label_encoder = insight.train_model(embeddings, labels)
+        
+        print("Evaluating model...")
+        insight.evaluate_model(model, label_encoder, Path("validation"), confidence_threshold=0.5)
     else:
         parser.print_help()
 
